@@ -45,6 +45,23 @@ class cPanel {
 		$username.= $array['service']['id'];
 		return $username;
 	}
+	function units2MB($units) {
+		$units = explode(' ', $units);
+		switch ($units[1]) {
+			case 'MB':
+				return floor($units[0]);
+			break;
+			case 'GB':
+				return floor($units[0] * 1024);
+			break;
+			case 'TB':
+				return floor($units[0] * 1024 * 1024);
+			break;
+			case 'PB':
+				return floor($units[0] * 1024 * 1024 * 1024);
+			break;
+		}
+	}
 	function user_cp($array) {
 		global $billic, $db;
 		$service = $array['service'];
@@ -227,7 +244,7 @@ class cPanel {
 					$array = array();
 					foreach ($data['cpanelresult']['data'] as $k => $v) {
 						$limit = strtolower($v['_max']);
-						$used = $billic->units2MB($v['count']);
+						$used = $this->units2MB($v['count']);
 						if ($used === null) {
 							$used = 0;
 						}
@@ -564,8 +581,8 @@ class cPanel {
 			$service['password'] = $billic->encrypt(strtolower($billic->rand_str(10)));
 			$db->q('UPDATE `services` SET `password` = ? WHERE `id` = ?', $service['password'], $service['id']);
 		}
-		$disk = $billic->units2MB($vars['disk']);
-		$bandwidth = $billic->units2MB($vars['bandwidth']);
+		$disk = $this->units2MB($vars['disk']);
+		$bandwidth = $this->units2MB($vars['bandwidth']);
 		if ($vars['is_reseller'] == 'yes') {
 			$disk = round($disk / 10);
 			$bandwidth = round($bandwidth / 10);
@@ -603,7 +620,7 @@ class cPanel {
 				return $this->cpanel_get_error($data);
 			}
 			// Set Account Limit
-			$dataraw = $this->curl('json-api/setresellerlimits?api.version=1&user=' . urlencode($service['username']) . '&enable_account_limit=1&account_limit=' . urlencode($vars['reseller_accounts']) . '&enable_resource_limits=1&bandwidth_limit=' . urlencode($billic->units2MB($vars['bandwidth'])) . '&diskspace_limit=' . urlencode($billic->units2MB($vars['disk'])));
+			$dataraw = $this->curl('json-api/setresellerlimits?api.version=1&user=' . urlencode($service['username']) . '&enable_account_limit=1&account_limit=' . urlencode($vars['reseller_accounts']) . '&enable_resource_limits=1&bandwidth_limit=' . urlencode($this->units2MB($vars['bandwidth'])) . '&diskspace_limit=' . urlencode($this->units2MB($vars['disk'])));
 			$data = json_decode($dataraw, true);
 			if (!is_array($data)) {
 				return $dataraw;
